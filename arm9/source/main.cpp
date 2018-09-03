@@ -327,17 +327,20 @@ int main(int argc, char **argv) {
 		{
 			scanKeys();
 			pressed = keysDownRepeat();
+			touchRead(&touch);
 			swiWaitForVBlank();
 		}
 		while (!pressed);
 
-		if ((pressed & KEY_LEFT) && !titleboxXmoveleft && !titleboxXmoveright) {
+		if (((pressed & KEY_LEFT) && !titleboxXmoveleft && !titleboxXmoveright)
+		|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px < 96 && !titleboxXmoveleft && !titleboxXmoveright)) {
 			cursorPosition -= 1;
 			if (cursorPosition >= 0) {
 				titleboxXmoveleft = true;
 				mmEffectEx(&snd_select);
 			}
-		} else if ((pressed & KEY_RIGHT) && !titleboxXmoveleft && !titleboxXmoveright) {
+		} else if (((pressed & KEY_RIGHT) && !titleboxXmoveleft && !titleboxXmoveright)
+				|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px > 160 && !titleboxXmoveleft && !titleboxXmoveright)) {
 			cursorPosition += 1;
 			if (cursorPosition <= 39) {
 				titleboxXmoveright = true;
@@ -354,7 +357,9 @@ int main(int argc, char **argv) {
 		}
 
 		// Select folder
-		if ((pressed & KEY_A) && showbubble && !titleboxXmoveleft && !titleboxXmoveright) {
+		if (((pressed & KEY_A) && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder)
+		|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px > 96 && touch.px < 160 && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder)
+		|| ((pressed & KEY_TOUCH) && touch.py > 170 && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder)) {
 			SaveSettings(false);
 			selectFolder(cursorPosition);
 			exitApp();
