@@ -297,10 +297,11 @@ int main(int argc, char **argv) {
 	InitSound();
 
 	storeFolder();
-	SaveSettings(true);
 
 	vector<DirEntry> dirContents;
 	getDirectoryContents(dirContents);
+
+	SaveSettings(true);
 
 	int pressed = 0;
 
