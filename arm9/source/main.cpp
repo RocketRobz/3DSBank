@@ -110,7 +110,7 @@ void LoadSettings(void) {
 void SaveSettings(bool newSlot) {
 	CIniFile settingsini( settingsinipath );
 
-	settingsini.GetInt("3DSBANK", "FOLDER_SLOT", (newSlot ? spawnedtitleboxes : cursorPosition));
+	settingsini.SetInt("3DSBANK", "FOLDER_SLOT", (newSlot ? spawnedtitleboxes : cursorPosition));
 	settingsini.SaveIniFile(settingsinipath);
 }
 
