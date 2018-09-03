@@ -122,12 +122,9 @@ void storeFolder(void) {
 }
 
 void selectFolder(int selectedFolderNumber) {
-	char folderPath[32];
-	snprintf(folderPath, sizeof(folderPath), "sd:/3DSBank/Slot%i", folderNumber);
 	char selectedFolderPath[32];
 	snprintf(selectedFolderPath, sizeof(selectedFolderPath), "sd:/3DSBank/Slot%i", selectedFolderNumber);
 
-	rename("sd:/Nintendo 3DS", folderPath);				// Store folder into bank
 	rename(selectedFolderPath, "sd:/Nintendo 3DS");		// Have 3DS use selected folder
 }
 
@@ -313,6 +310,7 @@ int main(int argc, char **argv) {
 	printLargeCentered(false, 8, currentFolderText);
 
 	while(1) {
+		clearText();
 		if (cursorPosition >= spawnedtitleboxes)
 		{
 			showbubble = false;
@@ -320,16 +318,12 @@ int main(int argc, char **argv) {
 		} else {
 			showbubble = true;
 			showSTARTborder = true;
+			printLargeCentered(false, 32, dirContents.at(cursorPosition).name.c_str());
 		}
+		printLargeCentered(false, 8, currentFolderText);
 
 		do
 		{
-			clearText();
-			printLargeCentered(false, 8, currentFolderText);
-			if (showbubble) {
-				printLargeCentered(false, 32, dirContents.at(cursorPosition).name.c_str());
-			}
-		
 			scanKeys();
 			pressed = keysDownRepeat();
 			swiWaitForVBlank();
