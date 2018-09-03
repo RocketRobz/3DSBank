@@ -365,8 +365,6 @@ void topBgLoad() {
 
 void graphicsInit()
 {
-	titleboxXpos = folderNumber*64;
-	
 	*(u16*)(0x0400006C) |= BIT(14);
 	*(u16*)(0x0400006C) &= BIT(15);
 	SetBrightness(0, 31);
