@@ -319,7 +319,7 @@ int main(int argc, char **argv) {
 		} else {
 			showbubble = true;
 			showSTARTborder = true;
-			printLargeCentered(false, 32, dirContents.at(cursorPosition).name.c_str());
+			printLargeCentered(false, 37+17, dirContents.at(cursorPosition).name.c_str());
 		}
 		printLargeCentered(false, 8, currentFolderText);
 
