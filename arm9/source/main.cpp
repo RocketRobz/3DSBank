@@ -295,12 +295,12 @@ int main(int argc, char **argv) {
 	keysSetRepeat(25, 5);
 
 	InitSound();
-	
-	vector<DirEntry> dirContents;
-	getDirectoryContents(dirContents);
 
 	storeFolder();
 	SaveSettings(true);
+
+	vector<DirEntry> dirContents;
+	getDirectoryContents(dirContents);
 
 	int pressed = 0;
 
