@@ -363,12 +363,14 @@ void topBgLoad() {
 	vramcpy_ui (&BG_PALETTE_SUB[0], _3ds_topPal, _3ds_topPalLen);
 }
 
-void graphicsInit()
+void graphicsInit(int initTitleboxXpos)
 {
 	*(u16*)(0x0400006C) |= BIT(14);
 	*(u16*)(0x0400006C) &= BIT(15);
 	SetBrightness(0, 31);
 	SetBrightness(1, 31);
+
+	titleboxXpos = initTitleboxXpos;
 
 	////////////////////////////////////////////////////////////
 	videoSetMode(MODE_5_3D | DISPLAY_BG2_ACTIVE);

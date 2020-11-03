@@ -25,7 +25,7 @@ void clearBmpScreen();
 void loadBoxArt(const char* filename);
 void clearBoxArt();
 void loadShoulders();
-void graphicsInit();
+void graphicsInit(int initTitleboxXpos);
 void startRendering(bool top);
 bool isRenderingTop();
 

@@ -61,6 +61,7 @@ int consoleModel = 0;
 bool isRegularDS = true;
 
 int folderNumber = 0;
+std::string folderAliases[40];
 static int cursorPosition = 0;
 
 /**
@@ -105,6 +106,10 @@ void LoadSettings(void) {
 	CIniFile settingsini( settingsinipath );
 
 	folderNumber = settingsini.GetInt("3DSBANK", "FOLDER_SLOT", 0);
+	for (int i = 0; i < 40; i++)
+	{
+		folderAliases[i] = settingsini.GetString("3DSBANK", "SLOT_NAME_" + to_string(i), "Slot " + to_string(i));
+	}
 }
 
 void SaveSettings(bool newSlot) {
@@ -287,9 +292,12 @@ int main(int argc, char **argv) {
 	LoadSettings();
 
 	char currentFolderText[256];
-	snprintf(currentFolderText, sizeof(currentFolderText), "Folder previously used: Slot%i", folderNumber);
+	//snprintf(currentFolderText, sizeof(currentFolderText), "Folder previously used: Slot %i", folderNumber);
+	snprintf(currentFolderText, sizeof(currentFolderText), "Current slot: %s", folderAliases[folderNumber].c_str());
+	cursorPosition = folderNumber;
 
-	graphicsInit();
+	graphicsInit(cursorPosition * 64); // (96 + 32) / 2);
+
 	fontInit();
 
 	keysSetRepeat(25, 5);
@@ -319,7 +327,8 @@ int main(int argc, char **argv) {
 		} else {
 			showbubble = true;
 			showSTARTborder = true;
-			printLargeCentered(false, 37+17, dirContents.at(cursorPosition).name.c_str());
+			//printLargeCentered(false, 37+17, dirContents.at(cursorPosition).name.c_str());
+			printLargeCentered(false, 37+17, folderAliases[cursorPosition].c_str());
 		}
 		printLargeCentered(false, 8, currentFolderText);
 
@@ -329,8 +338,7 @@ int main(int argc, char **argv) {
 			pressed = keysDownRepeat();
 			touchRead(&touch);
 			swiWaitForVBlank();
-		}
-		while (!pressed);
+		} while (!pressed);
 
 		if (((pressed & KEY_LEFT) && !titleboxXmoveleft && !titleboxXmoveright)
 		|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px < 96 && !titleboxXmoveleft && !titleboxXmoveright)) {
