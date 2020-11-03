@@ -140,7 +140,7 @@ dist:	all
 	
 $(TARGET).nds:	$(TARGET).arm7 $(TARGET).arm9
 	ndstool	-c $(TARGET).nds -7 $(TARGET).arm7.elf -9 $(TARGET).arm9.elf \
-			-b icon.bmp "3DSBank;Nintendo 3DS folder selector;Robz8" \
+			-b icon.bmp "3DSBank;Nintendo 3DS folder selector;RocketRobz" \
 			-g H3BA 01 "3DSBANK" -z 80040000 -u 00030004
 	python patch_ndsheader_dsiware_twltouch.py $(CURDIR)/$(TARGET).nds
 
