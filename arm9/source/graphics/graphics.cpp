@@ -20,6 +20,7 @@
 
 #include <nds.h>
 #include <gl2d.h>
+#include "lodepng.h"
 #include "bios_decompress_callback.h"
 #include "FontGraphic.h"
 
@@ -27,7 +28,7 @@
 #include "_3ds_bottom.h"
 #include "_3ds_bottom_bubble.h"
 
-#include "_3ds_top.h"
+#include "_3ds_top_png_bin.h"
 
 #include "dialogbox.h"
 #include "_3ds_bubble.h"
@@ -90,6 +91,10 @@ bool showdialogbox = false;
 float dbox_movespeed = 22;
 float dbox_Ypos = -192;
 
+u16 topBgImg[2][256*192] = {0};
+bool secondBuffer = false;
+
+int topBg;
 int bottomBg;
 
 int bottomBgState = 0; // 0 = Uninitialized 1 = No Bubble 2 = bubble.
@@ -222,6 +227,7 @@ void vBlankHandler()
 {
 	execQueue(); // Execute any actions queued during last vblank.
 
+	dmaCopyHalfWordsAsynch(0, topBgImg[secondBuffer], bgGetGfxPtr(topBg), 0x18000);
 	glBegin2D();
 	{
 		if(fadeType == true) {
@@ -347,6 +353,7 @@ void vBlankHandler()
 	}
 	glEnd2D();
 	GFX_FLUSH = 0;
+	secondBuffer = !secondBuffer;
 
 	startBorderZoomAnimDelay++;
 	if (startBorderZoomAnimDelay == 8) {
@@ -356,11 +363,6 @@ void vBlankHandler()
 		}
 		startBorderZoomAnimDelay = 0;
 	}
-}
-
-void topBgLoad() {
-	swiDecompressLZSSVram ((void*)_3ds_topTiles, (void*)CHAR_BASE_BLOCK_SUB(2), 0, &decompressBiosCallback);
-	vramcpy_ui (&BG_PALETTE_SUB[0], _3ds_topPal, _3ds_topPalLen);
 }
 
 void graphicsInit(int initTitleboxXpos)
@@ -374,7 +376,7 @@ void graphicsInit(int initTitleboxXpos)
 
 	////////////////////////////////////////////////////////////
 	videoSetMode(MODE_5_3D | DISPLAY_BG2_ACTIVE);
-	videoSetModeSub(MODE_3_2D | DISPLAY_BG0_ACTIVE);
+	videoSetModeSub(MODE_3_2D | DISPLAY_BG3_ACTIVE);
 
 	// Initialize gl2d
 	glScreen2D();
@@ -385,25 +387,14 @@ void graphicsInit(int initTitleboxXpos)
 	// Clear the GL texture state
 	glResetTextures();
 
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-
-	REG_BG0CNT_SUB = BG_MAP_BASE(0) | BG_COLOR_256 | BG_TILE_BASE(2);
-	BG_PALETTE[0]=0;
-	BG_PALETTE[255]=0xffff;
-	u16* bgMapSub = (u16*)SCREEN_BASE_BLOCK_SUB(0);
-	for (int i = 0; i < CONSOLE_SCREEN_WIDTH*CONSOLE_SCREEN_HEIGHT; i++) {
-		bgMapSub[i] = (u16)i;
-	}
-
 	lcdMainOnBottom();
-
-	topBgLoad();
 
 	// Set up enough texture memory for our textures
 	// Bank A is just 128kb and we are using 194 kb of
 	// sprites
 	vramSetBankA(VRAM_A_TEXTURE);
 	vramSetBankB(VRAM_B_TEXTURE);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
 	vramSetBankE(VRAM_E_TEX_PALETTE);
 	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
@@ -411,11 +402,59 @@ void graphicsInit(int initTitleboxXpos)
 	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
 	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
 
+	topBg = bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
+
+	std::vector<unsigned char> image;
+	unsigned width, height;
+	lodepng::decode(image, width, height, _3ds_top_png_bin, _3ds_top_png_bin_size);
+	bool alternatePixel = false;
+	for(unsigned i=0;i<image.size()/4;i++) {
+		image[(i*4)+3] = 0;
+		if (alternatePixel) {
+			if (image[(i*4)] >= 0x4) {
+				image[(i*4)] -= 0x4;
+				image[(i*4)+3] |= BIT(0);
+			}
+			if (image[(i*4)+1] >= 0x4) {
+				image[(i*4)+1] -= 0x4;
+				image[(i*4)+3] |= BIT(1);
+			}
+			if (image[(i*4)+2] >= 0x4) {
+				image[(i*4)+2] -= 0x4;
+				image[(i*4)+3] |= BIT(2);
+			}
+		}
+		topBgImg[0][i] = image[i*4]>>3 | (image[(i*4)+1]>>3)<<5 | (image[(i*4)+2]>>3)<<10 | BIT(15);
+		if (alternatePixel) {
+			if (image[(i*4)+3] & BIT(0)) {
+				image[(i*4)] += 0x4;
+			}
+			if (image[(i*4)+3] & BIT(1)) {
+				image[(i*4)+1] += 0x4;
+			}
+			if (image[(i*4)+3] & BIT(2)) {
+				image[(i*4)+2] += 0x4;
+			}
+		} else {
+			if (image[(i*4)] >= 0x4) {
+				image[(i*4)] -= 0x4;
+			}
+			if (image[(i*4)+1] >= 0x4) {
+				image[(i*4)+1] -= 0x4;
+			}
+			if (image[(i*4)+2] >= 0x4) {
+				image[(i*4)+2] -= 0x4;
+			}
+		}
+		topBgImg[1][i] = image[i*4]>>3 | (image[(i*4)+1]>>3)<<5 | (image[(i*4)+2]>>3)<<10 | BIT(15);
+		if ((i % 256) == 255) alternatePixel = !alternatePixel;
+		alternatePixel = !alternatePixel;
+	}
+
 	// Initialize the bottom background
 	bottomBg = bgInit(2, BgType_ExRotation, BgSize_ER_256x256, 0,1);
 	
 	bottomBgLoad(false, true);
-	swiWaitForVBlank();
 
 	dialogboxTexID = glLoadTileSet(dialogboxImage, // pointer to glImage array
 							16, // sprite width
@@ -507,6 +546,4 @@ void graphicsInit(int initTitleboxXpos)
 	irqSet(IRQ_VBLANK, vBlankHandler);
 	irqEnable(IRQ_VBLANK);
 	//consoleDemoInit();
-
-
 }
